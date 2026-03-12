@@ -156,3 +156,18 @@ Você pode rodar o backup a qualquer momento com o comando(Tente executar dentro
 ./backup.sh
 ```
 O script gerará um log detalhado em ~/backup_log.txt, permitindo auditar o sucesso da operação.
+
+---
+
+ # Apresentação (PDF): 
+ **https://github.com/nathantrajano/SysAdmin-project/blob/main/slide-1.pdf**
+
+--- 
+
+# 🔗 Referências
+
+Para aprofundamento nas ferramentas utilizadas, consulte as documentações oficiais:
+
+BorgBackup Documentation: https://borgbackup.readthedocs.io
+
+rsync Manual: https://linux.die.net/man/1/rsync
