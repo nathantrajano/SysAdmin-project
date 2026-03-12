@@ -115,3 +115,22 @@ borg check --repair ~/borg-repo
 * **Recuperacao Simples:** Extracao rapida de arquivos ou snapshots especificos.
 
 ---
+
+Como Executar o Script de Backup
+
+Para automatizar o processo e garantir a integridade dos dados sem intervenção manual, siga os passos abaixo:
+1. Preparação
+
+Certifique-se de que o arquivo possui permissão de execução:
+Bash
+
+chmod +x backup.sh
+
+2. Execução Manual
+
+Você pode rodar o backup a qualquer momento com o comando:
+Bash
+
+./backup.sh
+
+O script gerará um log detalhado em ~/backup_log.txt, permitindo auditar o sucesso da operação.
