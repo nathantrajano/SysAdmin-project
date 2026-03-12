@@ -41,6 +41,20 @@ O ciclo de vida completo do backup demonstrado inclui:
 
 ---
 
+## rsync (Remote Sync)
+O rsync é uma ferramenta clássica de administração de sistemas voltada para a sincronização eficiente de arquivos e diretórios.
+
+Sua principal característica é a transferência incremental: em vez de copiar o arquivo inteiro a cada execução, ele identifica e transfere apenas as partes que foram alteradas (deltas), o que otimiza significativamente o uso da rede. Além disso, ele preserva metadados como permissões e links simbólicos, operando nativamente sobre SSH para garantir segurança.
+
+**No entanto**, por ser focado em espelhamento, ele não gerencia um histórico de versões; se um arquivo for deletado na origem, ele será removido no destino.
+
+## BorgBackup (Borg)
+O BorgBackup é um sistema moderno de backup que resolve as limitações de versionamento do rsync.
+
+Ele utiliza uma técnica de deduplicação baseada em blocos (chunks), onde arquivos são divididos e apenas blocos únicos são armazenados, gerando uma enorme economia de espaço. Todo o repositório é protegido por criptografia de ponta, transformando os dados no destino em "blocos de lixo criptográfico" ilegíveis sem a chave. Com suporte a snapshots versionados e modo append-only (que impede a exclusão maliciosa de backups antigos por ransomware), o Borg oferece uma camada de segurança e recuperação rápida para ambientes críticos.
+
+---
+
 ## Demo
 
 ### 1. Sincronizacao com rsync
@@ -50,18 +64,22 @@ O **rsync** e ideal para espelhamento, mas nao mantem historico. Se um dado e ap
 ```bash
 # Instalacao e preparacao do ambiente
 sudo apt install rsync
+# Cria a pasta de origem dos dados e a pasta que servirá de destino para o rsync.
 mkdir ~/documentos ~/backup
 
-# Sincronizacao inicial (Criacao do espelho)
+# Cria um arquivo de texto com conteúdo inicial para testar o backup.
 echo "teste backup" > ~/documentos/arquivo1.txt
+# Sincroniza a pasta documentos com a pasta backup. A flag -a preserva atributos, -v mostra o progresso e --delete apaga no destino o que não existe mais na origem.
 rsync -av --delete ~/documentos/ $USER@localhost:/home/$USER/backup/
 
-# Atualizacao incremental
+# Modifica o arquivo existente para testar a sincronização incremental.
 echo "nova linha" >> ~/documentos/arquivo1.txt
+# Sincroniza
 rsync -av --delete ~/documentos/ $USER@localhost:/home/$USER/backup/
 
 # Simulacao de Erro: O espelhamento apaga o backup se a origem sumir
 rm ~/documentos/arquivo1.txt
+# Demonstra o risco do rsync puro; ao sincronizar após o erro, o backup também perde o arquivo, pois ele apenas espelha o estado atual.
 rsync -av --delete ~/documentos/ $USER@localhost:/home/$USER/backup/
 
 ```
@@ -73,15 +91,16 @@ Para resolver a falta de historico, o **Borg** cria snapshots versionados e segu
 ```bash
 # Instalacao e inicializacao do repositorio (com criptografia)
 sudo apt install borgbackup
+# Inicializa um novo repositório de backup. O modo repokey armazena a chave de criptografia dentro do repositório, protegida por uma senha.
 borg init --encryption=repokey /home/$USER/borg-repo
 
-# Criando um snapshot versionado
+# Cria o primeiro snapshot chamado "backup-1" contendo os dados da pasta backup.
 borg create /home/$USER/borg-repo::backup-1 /home/$USER/backup
 
 # Simulacao de perda total e restauracao
 rm -rf ~/backup/
-borg list /home/$USER/borg-repo
-borg extract /home/$USER/borg-repo::backup-1
+borg list /home/$USER/borg-repo # Lista todos os snapshots disponíveis no repositório, permitindo escolher qual versão restaurar.
+borg extract /home/$USER/borg-repo::backup-1 # Extrai os dados do snapshot "backup-1" de volta para o sistema.
 mv home/$USER/backup/ ~/  # Restaura para o local original
 
 ```
